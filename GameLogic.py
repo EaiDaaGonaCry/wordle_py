@@ -21,5 +21,16 @@ def colour_set(guess_word, secret_word, word_length):
                 triplets.append((letter, position, "x"))
 
     triplets.sort(key=lambda x: x[1])
-    
+
     return triplets
+
+def load_valid_words(file_path):
+    valid_words = set()
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            for line in file:
+                # Store everything as UPPERCASE to match your game logic
+                valid_words.add(line.strip().upper())
+    except FileNotFoundError:
+        print(f"Warning: {file_path} not found. Word validation disabled.")
+    return valid_words
