@@ -1,3 +1,0 @@
-import GameLogic
-
-import pygame

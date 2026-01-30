@@ -1,37 +1,19 @@
 import pygame
-import JsonStats
-from GameLogic import colour_set, load_valid_words
+from Settings import JsonStats
+import random
+from Settings.Logic import colour_set, load_valid_words, Button
+from Settings.Constants import *
 
 pygame.init()
 
-WIDTH, HEIGHT = 1200, 800
+# KEEP: Screen setup (now uses WIDTH/HEIGHT from Constants)
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("wordle")
+pygame.display.set_caption("Wordle The Game")
 
-# setting the colours
-WHITE = (255, 255, 255)
-BLACK = (19, 19, 20)
-DARK_GRAY = (62, 62, 66)
-GRAY = (128, 128, 128)
-GREEN = (39, 158, 28)
-YELLOW = (176, 184, 37)
-GRAY_BORDER = (62, 62, 66)
-GREEN_BORDER = (19,74,14) #1c6e14
-YELLOW_BORDER = (83, 87, 17) #8c1d92
-RED = (200, 50, 50)
-OUTLINE = (200, 200, 200)
-
-TITLE_FONT_SIZE = 30
-STAT_VAL_FONT_SIZE = 40
-STAT_LABEL_FONT_SIZE = 16
-
-#setting the font
-FONT_GUESS = pygame.font.SysFont("Arial", 56)
-FONT_ALPHABETICAL = pygame.font.SysFont("Arial", 24)
-FONT_RESULT = pygame.font.SysFont("Arial", 40, bold=True)
-FONT_SMALL = pygame.font.SysFont("Arial", 20)
-
-SECRET_WORD = "APPLE"
+FONT_GUESS        = pygame.font.SysFont(FONT_NAME, FONT_SIZE_GUESS)
+FONT_ALPHABETICAL = pygame.font.SysFont(FONT_NAME, 24)
+FONT_RESULT       = pygame.font.SysFont(FONT_NAME, 40, bold=True)
+FONT_SMALL        = pygame.font.SysFont(FONT_NAME, FONT_SIZE_SMALL)
 
 #function that draws the grid for wordle
 def draw_grid(guesses, current_guess_string, error_timer):
@@ -46,9 +28,9 @@ def draw_grid(guesses, current_guess_string, error_timer):
             x = start_x + col * (box_size + margin)
             y = start_y + row * (box_size + margin)
 
-            color = DARK_GRAY
+            color = COLOR_PANEL_BG
             letter = ""
-            border_color = OUTLINE
+            border_color = COLOR_ABSENT_BORDER
 
             if row < len(guesses):
                 triplet = guesses[row][col]
@@ -56,26 +38,26 @@ def draw_grid(guesses, current_guess_string, error_timer):
                 color_code = triplet[2]
 
                 if color_code   == "g":
-                    color = GREEN
-                    border_color = GREEN_BORDER
+                    color = COLOR_CORRECT
+                    border_color = COLOR_CORRECT_BORDER
                 elif color_code == "y":
-                    color = YELLOW
-                    border_color = YELLOW_BORDER
+                    color = COLOR_PRESENT
+                    border_color = COLOR_PRESENT_BORDER
                 else:
-                    color = GRAY
-                    border_color = GRAY_BORDER
+                    color = COLOR_ABSENT
+                    border_color = COLOR_ABSENT_BORDER
 
             elif row == len(guesses):
                 if col < len(current_guess_string):
                     letter = current_guess_string[col]
-                    border_color = GRAY
+                    border_color = COLOR_ABSENT
 
                 if error_timer > 0:
-                    border_color = RED
+                    border_color = COLOR_RED
                     shake_offset = 5 if (error_timer // 2) % 2 == 0 else -5
                     x += shake_offset
                 else:
-                    border_color = WHITE if letter != "" else OUTLINE
+                    border_color = COLOR_TEXT if letter != "" else COLOR_ABSENT_BORDER
 
             rect = pygame.Rect(x, y, box_size, box_size)
 
@@ -88,7 +70,7 @@ def draw_grid(guesses, current_guess_string, error_timer):
             pygame.draw.rect(SCREEN, border_color, rect, 1)
 
             if letter != "":
-                text_surface = FONT_GUESS.render(letter, True, WHITE)
+                text_surface = FONT_GUESS.render(letter, True, COLOR_TEXT)
                 text_rect = text_surface.get_rect(center=rect.center)
                 SCREEN.blit(text_surface, text_rect)
 
@@ -112,23 +94,23 @@ def draw_alphabet(alphabet_colors):
         for j, char in enumerate(row_keys):
             x = start_x + j * (box_size + margin)
 
-            color = alphabet_colors.get(char, DARK_GRAY)
+            color = alphabet_colors.get(char, COLOR_PANEL_BG)
 
             rect = pygame.Rect(x, y, box_size, box_size)
             pygame.draw.rect(SCREEN, color, rect)
 
-            text_surface = FONT_ALPHABETICAL.render(char, True, WHITE)
+            text_surface = FONT_ALPHABETICAL.render(char, True, COLOR_TEXT)
             text_rect = text_surface.get_rect(center=rect.center)
             SCREEN.blit(text_surface, text_rect)
 
 def draw_stat_item(screen, font_val, font_label, label, value, x, y, width):
     # Draw Value (Number)
-    val_surf = font_val.render(str(value), True, WHITE)
+    val_surf = font_val.render(str(value), True, COLOR_TEXT)
     val_rect = val_surf.get_rect(center=(x + width // 2, y))
     screen.blit(val_surf, val_rect)
 
     # Draw Label (Text)
-    lbl_surf = font_label.render(label, True, GREEN)
+    lbl_surf = font_label.render(label, True, COLOR_CORRECT)
     lbl_rect = lbl_surf.get_rect(center=(x + width // 2, y + 35))
     screen.blit(lbl_surf, lbl_rect)
 
@@ -136,8 +118,8 @@ def draw_stat_item(screen, font_val, font_label, label, value, x, y, width):
 def draw_stats_panel(screen, x, y, width, height):
 
     rect = pygame.Rect(x, y, width, height)
-    pygame.draw.rect(screen, DARK_GRAY, rect, border_radius=10)
-    pygame.draw.rect(screen, GREEN, rect, 2, border_radius=10)
+    pygame.draw.rect(screen, COLOR_PANEL_BG, rect, border_radius=10)
+    pygame.draw.rect(screen, COLOR_CORRECT, rect, 2, border_radius=10)
 
     stats = JsonStats.load_stats()
 
@@ -145,11 +127,11 @@ def draw_stats_panel(screen, x, y, width, height):
     if stats["played"] > 0:
         win_pct = int((stats["wins"] / stats["played"]) * 100)
 
-    font_title = pygame.font.SysFont("Arial", TITLE_FONT_SIZE, bold=True)
-    font_val = pygame.font.SysFont("Arial", STAT_VAL_FONT_SIZE, bold=True)
-    font_lbl = pygame.font.SysFont("Arial", STAT_LABEL_FONT_SIZE)
+    font_title = pygame.font.SysFont("Arial", FONT_SIZE_TITLE, bold=True)
+    font_val = pygame.font.SysFont("Arial", 40, bold=True)
+    font_lbl = pygame.font.SysFont("Arial", 16)
 
-    title_surf = font_title.render("STATISTICS", True, WHITE)
+    title_surf = font_title.render("STATISTICS", True, COLOR_TEXT)
     title_rect = title_surf.get_rect(center=(x + width // 2, y + 40))
     screen.blit(title_surf, title_rect)
 
@@ -164,50 +146,54 @@ def draw_stats_panel(screen, x, y, width, height):
     draw_stat_item(screen, font_val, font_lbl, "Max Streak", stats["max_streak"] , center_x + spacing - 40, row2_y, 80)
 
 def draw_end_message(won, secret_word):
-    overlay_width, overlay_height = 400, 200
+    overlay_width, overlay_height = 400, 250
     overlay_x = (WIDTH - overlay_width) // 2
     overlay_y = HEIGHT // 2 - 100
 
     rect = pygame.Rect(overlay_x, overlay_y, overlay_width, overlay_height)
-    pygame.draw.rect(SCREEN, BLACK, rect)
+    pygame.draw.rect(SCREEN, COLOR_BG, rect)
     if won:
-        pygame.draw.rect(SCREEN, GREEN, rect, 3)
+        pygame.draw.rect(SCREEN, COLOR_CORRECT, rect, 3)
     else:
-        pygame.draw.rect(SCREEN, RED, rect, 3)
+        pygame.draw.rect(SCREEN, COLOR_RED, rect, 3)
 
     msg = "VICTORY!" if won else "GAME OVER"
-    color = GREEN if won else RED
+    color = COLOR_CORRECT if won else COLOR_RED
+
     text_surf = FONT_RESULT.render(msg, True, color)
     text_rect = text_surf.get_rect(center=(WIDTH // 2, overlay_y + 50))
     SCREEN.blit(text_surf, text_rect)
 
     if not won:
         word_msg = f"Word was: {secret_word}"
-        word_surf = FONT_SMALL.render(word_msg, True, WHITE)
+        word_surf = FONT_SMALL.render(word_msg, True, COLOR_TEXT)
         word_rect = word_surf.get_rect(center=(WIDTH // 2, overlay_y + 90))
         SCREEN.blit(word_surf, word_rect)
 
-    restart_msg = "Press 'R' to Play Again"
-    restart_surf = FONT_SMALL.render(restart_msg, True, GRAY)
-    restart_rect = restart_surf.get_rect(center=(WIDTH // 2, overlay_y + 140))
-    SCREEN.blit(restart_surf, restart_rect)
-
-    restart_msg = "Press 'H' to go to Home screen"
-    restart_surf = FONT_SMALL.render(restart_msg, True, GRAY)
-    restart_rect = restart_surf.get_rect(center=(WIDTH // 2, overlay_y + 170))
-    SCREEN.blit(restart_surf, restart_rect)
-
 
 def run_game():
-    VALID_WORDS = load_valid_words("Files/valid-wordle-words.txt")
+    #use "../Files/valid-wordle-words.txt"
+    #if you want to test only this file
+    # use "Files/valid-wordle-words.txt"
+    # if you want to use the program
+    valid_words = load_valid_words("Files/valid-wordle-words.txt")
     guesses = []
     current_guess_string = ""
     alphabet_colors = {}
+    #For testing if needed
+    #secret_word = "APPLE"
+    secret_word = random.choice(valid_words).upper()
 
     running = True
     game_over = False
     won = False
     error_timer = 0
+
+    btn_y = (HEIGHT // 2) + 50
+    center_x = WIDTH // 2
+
+    restart_btn = Button(center_x - 130, btn_y, 120, 50, "Restart", COLOR_PANEL_BG)
+    home_btn = Button(center_x + 10, btn_y, 120, 50, "Home", COLOR_PANEL_BG)
 
     while running:
         if error_timer > 0:
@@ -217,35 +203,36 @@ def run_game():
             if event.type == pygame.QUIT:
                 return "QUIT"
 
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 if game_over:
-                    if event.key == pygame.K_r:
+                    if restart_btn.is_clicked(event.pos):
                         return "RESTART"
-                    elif event.key == pygame.K_h:
+                    if home_btn.is_clicked(event.pos):
                         return "HOME"
 
-                else:
+            if event.type == pygame.KEYDOWN:
+                if not game_over:
                     if event.key == pygame.K_BACKSPACE:
                         current_guess_string = current_guess_string[:-1]
                         error_timer = 0
 
                     elif event.key == pygame.K_RETURN:
                         if len(current_guess_string) == 5:
-                            if len(VALID_WORDS) > 0 and current_guess_string not in VALID_WORDS:
+                            if len(valid_words) > 0 and current_guess_string not in valid_words:
                                 error_timer = 20
                             else:
-                                result = colour_set(current_guess_string, SECRET_WORD, 5)
+                                result = colour_set(current_guess_string, secret_word, 5)
                                 guesses.append(result)
 
                                 for triplet in result:
                                     letter, _, status = triplet
                                     curr_col = alphabet_colors.get(letter)
                                     if status == "g":
-                                        alphabet_colors[letter] = GREEN
-                                    elif status == "y" and curr_col != GREEN:
-                                        alphabet_colors[letter] = YELLOW
-                                    elif status == "x" and curr_col not in [GREEN, YELLOW]:
-                                        alphabet_colors[letter] = GRAY
+                                        alphabet_colors[letter] = COLOR_CORRECT
+                                    elif status == "y" and curr_col != COLOR_CORRECT:
+                                        alphabet_colors[letter] = COLOR_PRESENT
+                                    elif status == "x" and curr_col not in [COLOR_CORRECT, COLOR_PRESENT]:
+                                        alphabet_colors[letter] = COLOR_ABSENT
 
                                 current_guess_string = ""
 
@@ -262,24 +249,28 @@ def run_game():
                     elif len(current_guess_string) < 5 and event.unicode.isalpha():
                         current_guess_string += event.unicode.upper()
 
-        SCREEN.fill(BLACK)
+        SCREEN.fill(COLOR_BG)
 
-        draw_grid(guesses, current_guess_string,error_timer)
+        draw_grid(guesses, current_guess_string, error_timer)
         draw_alphabet(alphabet_colors)
 
         STATS_X = (WIDTH + (5 * 88 + 4 * 25 + 60) - 55 * 5 - 5) // 2
         draw_stats_panel(SCREEN, STATS_X, 100, 300, 300)
 
         if game_over:
-            draw_end_message(won, SECRET_WORD)
+            draw_end_message(won, secret_word)
+            # Draw buttons on top of the end message
+            restart_btn.draw(SCREEN)
+            home_btn.draw(SCREEN)
 
         pygame.display.flip()
 
+
 if __name__ == "__main__":
-    # This block ONLY runs if you run "PlayerMode.py" directly.
-    # It will NOT run if you import it into MainMenu.
     while True:
         result = run_game()
         if result == "HOME":
+            break
+        if result == "QUIT":
             break
     pygame.quit()

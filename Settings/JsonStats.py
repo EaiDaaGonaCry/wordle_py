@@ -4,7 +4,7 @@ import os
 
 STATS_FILE = "Files/stats.json"
 
-DARK_GRAY = (62, 62, 66) # A dark gray to match your theme
+DARK_GRAY = (62, 62, 66)
 TEXT_WHITE = (255, 255, 255)
 ACCENT_GREEN = (106, 170, 100)
 

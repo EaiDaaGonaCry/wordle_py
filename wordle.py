@@ -1,12 +1,13 @@
 import pygame
 import sys
-import PlayerMode
+from Modes import AiMode, PlayerMode
+from Settings.Constants import *
 
 pygame.init()
 
 WIDTH, HEIGHT = 1200, 800
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Wordle Master Project")
+pygame.display.set_caption("Wordle")
 
 BG_COLOR = (19, 19, 20)
 TEXT_WHITE = (255, 255, 255)
@@ -77,10 +78,19 @@ def main_menu():
                             pygame.quit()
                             sys.exit()
 
-                        pygame.display.set_caption("Wordle Master Project")
+                        pygame.display.set_caption("Wordle")
 
                     elif action == "SOLVER":
-                        print("Solver Mode - Coming Soon!")
+                        current_state = "RESTART"
+
+                        while current_state == "RESTART":
+                            current_state = AiMode.run_ai_mode()
+
+                        if current_state == "QUIT":
+                            pygame.quit()
+                            sys.exit()
+
+                        pygame.display.set_caption("Wordle")
 
                     elif action == "EXIT":
                         pygame.quit()
