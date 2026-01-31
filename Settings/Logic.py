@@ -1,5 +1,9 @@
-from random import random
+import random
 import pygame
+
+#=================
+# LOGIC FUNCTIONS
+#=================
 
 def colour_set(guess_word, secret_word, word_length):
     triplets = []
@@ -120,6 +124,39 @@ def get_best_word(possible_words):
 
     return best_word
 
+def colour_value_helper(triplets):
+    sum = 0;
+
+    for i in triplets:
+        colour = i[2]
+        if colour == 'g':
+            sum += 3
+        if colour == 'y':
+            sum += 1
+
+    return sum
+
+def get_best_lie(guess_word,word_pool, length):
+    candidates = []
+
+    for potential_word in word_pool:
+        temp_triplets = colour_set(guess_word, potential_word, length)
+        score = colour_value_helper(temp_triplets)
+
+        if 3 <= score <= 7:
+            candidates.append(potential_word)
+
+    if len(candidates) > 0:
+        lie_word = random.choice(candidates)
+    else:
+        lie_word = random.choice(word_pool)
+
+    return colour_set(guess_word, lie_word, length)
+
+#=================
+#       UI
+#=================
+
 class Button:
     def __init__(self, x, y, width, height, text, color, text_color=(255, 255, 255)):
         self.rect = pygame.Rect(x, y, width, height)
@@ -144,3 +181,4 @@ class Button:
 
     def is_clicked(self, pos):
         return self.rect.collidepoint(pos)
+

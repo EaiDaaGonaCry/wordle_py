@@ -18,7 +18,7 @@ FONT_SMALL  = pygame.font.SysFont(FONT_NAME, FONT_SIZE_SMALL)
 FONT_RESULT = pygame.font.SysFont(FONT_NAME, 40, bold=True)
 
 def draw_tile(screen, x, y, size, letter, color_code):
-    bg_color = COLOR_ABSENT
+    bg_color = COLOR_PANEL_BG
     if color_code == 'g':
         bg_color = COLOR_CORRECT
     elif color_code == 'y':
@@ -65,7 +65,6 @@ def draw_input_panel(screen, rect, current_suggestion, input_pattern, message):
     screen.blit(FONT_SMALL.render("ENTER PATTERN (Click or Type G/Y/X):", True, COLOR_ACCENT),
                 (rect.x + 20, rect.y + 130))
 
-    # Input Tiles
     tile_size = 80
     gap = 10
     start_x = rect.x + (rect.width - (5 * tile_size + 4 * gap)) // 2
@@ -73,7 +72,7 @@ def draw_input_panel(screen, rect, current_suggestion, input_pattern, message):
 
     click_rects = []
     for i in range(5):
-        color_code = input_pattern[i] if i < len(input_pattern) else 'x'
+        color_code = input_pattern[i] if i < len(input_pattern) else ''
         letter = current_suggestion[i] if i < len(current_suggestion) else ""
 
         draw_tile(screen, start_x + i * (tile_size + gap), tile_y, tile_size, letter, color_code)
@@ -97,7 +96,7 @@ def draw_stats_panel(screen, rect, words_left, attempts):
 
 def draw_end_message(screen, panel_rect, won):
     overlay_surf = pygame.Surface((panel_rect.width, panel_rect.height), pygame.SRCALPHA)
-    overlay_surf.fill((0, 0, 0, 200))  # Semi-transparent black
+    overlay_surf.fill((0, 0, 0, 200))
     screen.blit(overlay_surf, (panel_rect.x, panel_rect.y))
 
     msg = "VICTORY!" if won else "GAME OVER"
@@ -118,13 +117,12 @@ def run_ai_mode():
         # if you want to test only this file
         # use "Files/valid-wordle-words.txt"
         # if you want to use the program
-        valid_words = load_valid_words("Files/valid-wordle-words.txt")
+        possible_words = load_valid_words("Files/valid-wordle-words.txt")
     except:
-        valid_words = ["ERROR"]
+        possible_words = ["ERROR"]
 
-    possible_words = valid_words
     guessed_history = []
-    current_suggestion = random.choice(valid_words)
+    current_suggestion = random.choice(possible_words)
 
     input_pattern = []
     attempts = 1
@@ -134,12 +132,10 @@ def run_ai_mode():
     clock = pygame.time.Clock()
     running = True
 
-    # --- LAYOUT ---
     history_rect = pygame.Rect(20, 20, 400, HEIGHT - 40)
     input_rect = pygame.Rect(440, 20, 740, 400)
     stats_rect = pygame.Rect(440, 440, 740, HEIGHT - 460)
 
-    # Submit Button
     btn_w, btn_h = 200, 50
     submit_btn = Button(
         input_rect.centerx - btn_w // 2,
@@ -159,7 +155,6 @@ def run_ai_mode():
     home_btn = Button(home_x, btn_y, end_btn_w, end_btn_h, "HOME", (60, 60, 70))
 
     while running:
-        # --- EVENT HANDLING ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -220,9 +215,8 @@ def run_ai_mode():
 
                 else:  # GAME OVER
                     if restart_btn.is_clicked(event.pos):
-                        possible_words = valid_words[:]
                         guessed_history = []
-                        current_suggestion = random.choice(valid_words)  # Random start again
+                        current_suggestion = random.choice(possible_words)  # Random start again
                         input_pattern = []
                         attempts = 1
                         message = "Click boxes or type G/Y/X"

@@ -9,11 +9,7 @@ WIDTH, HEIGHT = 1200, 800
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Wordle")
 
-BG_COLOR = (19, 19, 20)
-TEXT_WHITE = (255, 255, 255)
-BUTTON_COLOR = (62, 62, 66)
-HOVER_COLOR = (100, 100, 100)
-ACCENT_GREEN = (39, 158, 28)
+HOVER_COLOR = COLOR_BORDER
 
 FONT_TITLE = pygame.font.SysFont("Arial", 80, bold=True)
 FONT_BUTTON = pygame.font.SysFont("Arial", 40)
@@ -27,12 +23,12 @@ class Button:
         self.is_hovered = False
 
     def draw(self, screen):
-        color = HOVER_COLOR if self.is_hovered else BUTTON_COLOR
+        color = HOVER_COLOR if self.is_hovered else COLOR_PANEL_BG
 
         pygame.draw.rect(screen, color, self.rect, border_radius=10)
-        pygame.draw.rect(screen, TEXT_WHITE, self.rect, 2, border_radius=10)  # Border
+        pygame.draw.rect(screen, COLOR_TEXT, self.rect, 2, border_radius=10)  # Border
 
-        text_surf = FONT_BUTTON.render(self.text, True, TEXT_WHITE)
+        text_surf = FONT_BUTTON.render(self.text, True, COLOR_TEXT)
         text_rect = text_surf.get_rect(center=self.rect.center)
         screen.blit(text_surf, text_rect)
 
@@ -49,9 +45,9 @@ def main_menu():
     btn_width, btn_height = 400, 80
     center_x = (WIDTH - btn_width) // 2
 
-    btn_play = Button("Play Wordle", center_x, 300, btn_width, btn_height, "PLAY")
+    btn_play   = Button("Play Wordle", center_x, 300, btn_width, btn_height, "PLAY")
     btn_solver = Button("Wordle Solver", center_x, 400, btn_width, btn_height, "SOLVER")
-    btn_quit = Button("Quit Game", center_x, 500, btn_width, btn_height, "EXIT")
+    btn_quit   = Button("Quit Game", center_x, 500, btn_width, btn_height, "EXIT")
 
     buttons = [btn_play, btn_solver, btn_quit]
 
@@ -69,16 +65,30 @@ def main_menu():
                     action = btn.check_click(mouse_pos)
 
                     if action == "PLAY":
-                        current_state = "RESTART"
+                        # 1. Call the function inside PlayerMode
+                        difficulty = PlayerMode.select_difficulty()
 
-                        while current_state == "RESTART":
-                            current_state = PlayerMode.run_game()
-
-                        if current_state == "QUIT":
+                        # 2. Check the result
+                        if difficulty == "QUIT":
                             pygame.quit()
                             sys.exit()
 
-                        pygame.display.set_caption("Wordle")
+                        elif difficulty == "BACK":
+                            # Just do nothing, loop continues and redraws main menu
+                            pass
+
+                        else:
+                            # 3. If "NORMAL" or "EXTREME", start the game loop
+                            current_state = "RESTART"
+                            while current_state == "RESTART":
+                                # Pass the difficulty we selected earlier
+                                current_state = PlayerMode.run_game(difficulty)
+
+                            if current_state == "QUIT":
+                                pygame.quit()
+                                sys.exit()
+
+                            pygame.display.set_caption("Wordle")
 
                     elif action == "SOLVER":
                         current_state = "RESTART"
@@ -96,9 +106,9 @@ def main_menu():
                         pygame.quit()
                         sys.exit()
 
-        SCREEN.fill(BG_COLOR)
+        SCREEN.fill(COLOR_BG)
 
-        title_surf = FONT_TITLE.render("WORDLE MASTER", True, ACCENT_GREEN)
+        title_surf = FONT_TITLE.render("WORDLE MASTER", True, COLOR_CORRECT)
         title_rect = title_surf.get_rect(center=(WIDTH // 2, 150))
         SCREEN.blit(title_surf, title_rect)
 

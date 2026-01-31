@@ -1,7 +1,7 @@
 import pygame
 from Settings import JsonStats
 import random
-from Settings.Logic import colour_set, load_valid_words, Button
+from Settings.Logic import colour_set, load_valid_words, get_best_lie, Button
 from Settings.Constants import *
 
 pygame.init()
@@ -28,7 +28,7 @@ def draw_grid(guesses, current_guess_string, error_timer):
             x = start_x + col * (box_size + margin)
             y = start_y + row * (box_size + margin)
 
-            color = COLOR_PANEL_BG
+            color = COLOR_ABSENT
             letter = ""
             border_color = COLOR_ABSENT_BORDER
 
@@ -44,7 +44,7 @@ def draw_grid(guesses, current_guess_string, error_timer):
                     color = COLOR_PRESENT
                     border_color = COLOR_PRESENT_BORDER
                 else:
-                    color = COLOR_ABSENT
+                    color = COLOR_PANEL_BG
                     border_color = COLOR_ABSENT_BORDER
 
             elif row == len(guesses):
@@ -171,7 +171,44 @@ def draw_end_message(won, secret_word):
         SCREEN.blit(word_surf, word_rect)
 
 
-def run_game():
+def select_difficulty():
+    # Setup for the menu
+    title_font = pygame.font.SysFont("Arial", 50, bold=True)
+    center_x = WIDTH // 2
+    center_y = HEIGHT // 2
+
+    # Create Buttons
+    # Normal on Left, Extreme on Right
+    btn_normal = Button(center_x - 220, center_y, 200, 60, "NORMAL", COLOR_PANEL_BG)
+    btn_extreme = Button(center_x + 20, center_y, 200, 60, "EXTREME", COLOR_PANEL_BG)
+
+    while True:
+        # Event Loop
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "QUIT"
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if btn_normal.is_clicked(event.pos):
+                    return "NORMAL"
+                if btn_extreme.is_clicked(event.pos):
+                    return "EXTREME"
+
+        # Drawing
+        SCREEN.fill(COLOR_BG)
+
+        # Title
+        title_surf = title_font.render("SELECT DIFFICULTY", True, COLOR_TEXT)
+        title_rect = title_surf.get_rect(center=(center_x, center_y - 100))
+        SCREEN.blit(title_surf, title_rect)
+
+        # Buttons
+        btn_normal.draw(SCREEN)
+        btn_extreme.draw(SCREEN)
+
+        pygame.display.flip()
+
+def run_game(difficulty):
     #use "../Files/valid-wordle-words.txt"
     #if you want to test only this file
     # use "Files/valid-wordle-words.txt"
@@ -189,11 +226,19 @@ def run_game():
     won = False
     error_timer = 0
 
+
     btn_y = (HEIGHT // 2) + 50
     center_x = WIDTH // 2
 
     restart_btn = Button(center_x - 130, btn_y, 120, 50, "Restart", COLOR_PANEL_BG)
     home_btn = Button(center_x + 10, btn_y, 120, 50, "Home", COLOR_PANEL_BG)
+    # for testins just comment the
+    # if section and put the round with lie
+
+    lie_index = -1
+
+    if difficulty == "EXTREME":
+        lie_index = random.randint(0, 4)
 
     while running:
         if error_timer > 0:
@@ -221,7 +266,12 @@ def run_game():
                             if len(valid_words) > 0 and current_guess_string not in valid_words:
                                 error_timer = 20
                             else:
-                                result = colour_set(current_guess_string, secret_word, 5)
+                                result = []
+                                if difficulty == "EXTREME" and current_guess_string != secret_word:
+                                    result = get_best_lie(current_guess_string, valid_words, 5)
+                                else:
+                                    result = colour_set(current_guess_string, secret_word, 5)
+
                                 guesses.append(result)
 
                                 for triplet in result:
@@ -267,10 +317,38 @@ def run_game():
 
 
 if __name__ == "__main__":
+
+    # --- OUTER LOOP: Application/Menu Flow ---
     while True:
-        result = run_game()
-        if result == "HOME":
+
+        # 1. Call the new function to get the difficulty
+        mode = menu_screen()
+
+        # If user closed the window in the menu
+        if mode == "QUIT":
             break
-        if result == "QUIT":
+
+        # --- INNER LOOP: Gameplay Flow ---
+        # We stay here if the user clicks "RESTART"
+        playing = True
+        while playing:
+
+            # We pass the chosen 'mode' into the game
+            # Note: Ensure run_game is defined as: def run_game(difficulty):
+            result = run_game(mode)
+
+            if result == "QUIT":
+                playing = False
+                mode = "QUIT"  # Signal to break the outer loop too
+
+            elif result == "HOME":
+                playing = False  # Break inner loop -> Return to Menu
+
+            elif result == "RESTART":
+                pass  # Do nothing -> Loop repeats with same 'mode'
+
+        # Check if we need to fully exit
+        if mode == "QUIT":
             break
+
     pygame.quit()
