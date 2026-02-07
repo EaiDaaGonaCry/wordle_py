@@ -1,6 +1,6 @@
 # 🧠 Wordle: Extreme & Reverse Edition
 
-A Python-based evolution of the classic word game, built with Pygame. This project goes beyond standard Wordle by introducing an **"Extreme" difficulty** where the game (or player) can lie, and a **Reverse Mode** where the computer tries to guess *your* word.
+A Python-based evolution of the classic word game, built with Pygame. This project goes beyond standard Wordle by introducing an **"Extreme" difficulty** where the game (or player) can lie once, and a **Reverse Mode** where the computer tries to guess *your* word.
 
 ## 🌟 Unique Features
 
@@ -12,7 +12,7 @@ A Python-based evolution of the classic word game, built with Pygame. This proje
 ### 2. Difficulty Levels
 * **Normal:** Standard Wordle rules. Feedback is always 100% accurate.
 * **🔥 Extreme ( The "Lie" Mechanic):**
-    * **In Singleplayer:** The computer provides feedback, but **one of the color hints might be a lie** (e.g., marking a letter Green when it should be Yellow). You must use logic to deduce which hint is false.
+    * **In Singleplayer:** The computer provides feedback, but **the color hints might be a lie** (e.g., marking a letter Green when it should be Yellow). You must use logic to deduce which hint is false.
     * **In AI Solver:** You (the player) are allowed to give **one fake feedback** to try and trick the computer. The AI includes a "Lie Detector" logic to try and filter out your deception.
 
 ### 3. Core Mechanics
@@ -29,20 +29,24 @@ A Python-based evolution of the classic word game, built with Pygame. This proje
 * **Levenshtein Distance:** Used in PvE bots to calculate word similarity for "human-like" guessing patterns.
 
 ### Tech Stack
-* **Engine:** Python 3.10+ & `pygame`
+* **Engine:** Python 3.13+, `pygame` >=2.6.1, `google-genai`>=1.62.0
 * **Data:** JSON (Stats), Text Files (Dictionary)
 * **APIs:** Google Gemini (Optional for advanced PvE bot logic)
 
 ## 📂 Project Structure
 
 ```text
-├── Modes/
-│   ├── AiMode.py          # Reverse Mode (Computer guesses YOUR word)
-│   ├── PlayerMode.py      # Classic Mode (You guess the word)
-│   └── PveMode.py         # Race Mode (You vs Bot)
-├── Settings/
-│   ├── Logic.py           # Core algorithms (Lie detector, Solver logic)
-│   ├── DifficultyMenu.py  # Select Normal vs Extreme
-│   └── ...
-├── tests/                 # Unit tests for logic and UI
-└── wordle.py              # Main entry point
+├── Modes/                 # Game loop logic
+│   ├── AiMode.py          # Bot logic (Gemini & Algorithm)
+│   ├── PlayerMode.py      # Standard single-player loop
+│   └── PveMode.py         # Player vs Bot loop
+├── Settings/              # UI and Utilities
+│   ├── Constants.py       # Colors, Dimensions, Config
+│   ├── DifficultyMenu.py  # Game setup screen
+│   ├── JsonStats.py       # Leaderboard I/O
+│   ├── Logic.py           # Core Wordle algorithms (checking guesses)
+│   └── WordEditor.py      # UI for adding/removing words
+├── tests/                 # Unit tests
+├── wordle.py              # Main entry point
+├── requirements.txt       # Dependencies
+└── valid-wordle-words.txt # Dictionary file
