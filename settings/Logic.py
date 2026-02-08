@@ -251,5 +251,5 @@ def levenshtein_distance(s1: str, s2: str) -> int:
             deletions = current_row[j] + 1
             substitutions = previous_row[j] + (c1 != c2)
             current_row.append(min(insertions, deletions, substitutions))
-        previous_row = current_row # type: ignore
-    return previous_row[-1] # type: ignore
+        previous_row = current_row
+    return previous_row[-1]
